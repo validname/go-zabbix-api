@@ -1,6 +1,6 @@
 package zabbix
 
-import "encoding/json"
+import "github.com/AlekSi/reflector"
 
 type (
 	TriggerFlags      int
@@ -35,13 +35,6 @@ const (
 	Unknown  TriggerValueFlags = 1
 )
 
-type ResponseTrigger struct {
-	Jsonrpc string    `json:"jsonrpc"`
-	Error   *Error    `json:"error"`
-	Result  []Trigger `json:"result"`
-	Id      int32     `json:"id"`
-}
-
 type Function struct {
 	FunctionId int64  `json:"functionid,string"`
 	ItemId     int64  `json:"itemid,string"`
@@ -51,7 +44,7 @@ type Function struct {
 
 // https://www.zabbix.com/documentation/2.0/manual/appendix/api/trigger/definitions
 type Trigger struct {
-	TriggerId   int64             `json:"triggerid,string"`
+	TriggerId   string            `json:"triggerid,string"`
 	Description string            `json:"description"`
 	Functions   []Function        `json:"functions"`
 	Expression  string            `json:"expression"`
@@ -66,43 +59,94 @@ type Trigger struct {
 	Url         string            `json:"url"`
 	Value       TriggerValue      `json:"value,string"`
 	ValueFlags  TriggerValueFlags `json:"value_flags,string"`
+	// only when expandData flag is set
+	HostId string `json:"hostid,string"`
+	Host   string `json:"host,string"`
 }
 
+type Triggers []Trigger
+
 // Wrapper for trigger.get: https://www.zabbix.com/documentation/2.0/manual/appendix/api/trigger/get
-func (api *API) GetTrigger(params Params) ([]Trigger, error) {
+func (api *API) TriggersGet(params Params) (res Triggers, err error) {
 	if _, present := params["output"]; !present {
 		params["output"] = "extend"
 	}
-	if _, present2 := params["expandExpression"]; !present2 {
+	if _, present := params["expandExpression"]; !present {
 		params["expandExpression"] = "extend"
 	}
-	if _, present3 := params["expandDescription"]; !present3 {
+	if _, present := params["expandDescription"]; !present {
 		params["expandDescription"] = "flag"
 	}
-	if _, present4 := params["selectFunctions"]; !present4 {
+	if _, present := params["expandData"]; !present {
+		params["expandData"] = "extend"
+	}
+	if _, present := params["selectFunctions"]; !present {
 		params["selectFunctions"] = "extend"
 	}
-	response, err := api.callBytes("trigger.get", params)
-	if err != nil {
-		return nil, err
-	}
-	r := ResponseTrigger{}
-	err = json.Unmarshal(response, &r)
 
-	return r.Result, err
+	response, err := api.CallWithError("trigger.get", params)
+	if err != nil {
+		return
+	}
+	reflector.MapsToStructs2(response.Result.([]interface{}), &res, reflector.Strconv, "json")
+	return
+}
+
+// Get trigger extended information by Id only if there is exactly 1 matching trigger
+func (api *API) TriggerGetById(id string) (res *Trigger, err error) {
+	params := make( map [string]interface{} )
+	params["output"] = "extend"
+	params["expandExpression"] = "extend"
+	params["expandDescription"] = "flag"
+	params["expandData"] = "extend"
+	params["selectFunctions"] = "extend"
+
+	triggers, err := api.TriggersGet(params)
+	if err != nil {
+		return
+	}
+	if len(triggers) == 1 {
+		res = &triggers[0]
+	} else {
+		e := ExpectedOneResult(len(triggers))
+		err = &e
+	}
+	return
+}
+
+// Return triggers on hosts which was inherited from template trigger
+// 
+func (api *API) TriggersGetInheritedFromId(id string, optional_filters ...map[string]string) (res Triggers, err error) {
+	params := make( map [string]interface{} )
+	params["output"] = "extend"
+	params["expandExpression"] = "extend"
+	params["expandDescription"] = "flag"
+	params["expandData"] = "extend"
+	params["inherited"] = 1
+
+	filter := make( map [string]string )
+	filter["templateid"] = id
+
+	for _, optional_filter := range optional_filters {
+		for property, value := range optional_filter {
+			filter[property] = value
+		}
+	}
+	params["filter"] = filter
+	return api.TriggersGet(params)
 }
 
 // Wrapper for trigger.create: https://www.zabbix.com/documentation/2.0/manual/appendix/api/trigger/create
-func (api *API) TriggerCreate(trigger Trigger) (err error) {
-	response, err := api.CallWithError("trigger.create", trigger)
+func (api *API) TriggersCreate(triggers Triggers) (err error) {
+	response, err := api.CallWithError("trigger.create", triggers)
 	if err != nil {
 		return
 	}
 
 	result := response.Result.(map[string]interface{})
 	triggerids := result["triggerids"].([]interface{})
-	for _, id := range triggerids {
-		trigger.TriggerId = id.(string)
+	for i, id := range triggerids {
+		triggers[i].TriggerId = id.(string)
 	}
 	return
 }
