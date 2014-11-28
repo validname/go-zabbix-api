@@ -93,7 +93,7 @@ func (api *API) printf(format string, v ...interface{}) {
 
 func (api *API) setVersion() (err error) {
 	strVersion, err := api.Version()
-	api.printf("strVersion: %s", strVersion)
+	//api.printf("strVersion: %s", strVersion)
 	var versioninfo []string
 	versioninfo = strings.Split(strVersion, ".")
 
@@ -111,12 +111,7 @@ func (api *API) setVersion() (err error) {
 
 func (api *API) callBytes(method string, params interface{}) (b []byte, err error) {
 	id := atomic.AddInt32(&api.id, 1)
-	auth := api.Auth
-	if method == "APIInfo.version" {
-		auth = ""
-	}
-
-	jsonobj := request{"2.0", method, params, auth, id}
+	jsonobj := request{"2.0", method, params, api.Auth, id}
 	b, err = json.Marshal(jsonobj)
 	if err != nil {
 		return
@@ -172,6 +167,8 @@ func (api *API) Login(user, password string) (auth string, err error) {
 
 	auth = response.Result.(string)
 	api.Auth = auth
+	// force discover Zabbix version
+	api.setVersion()
 	return
 }
 
