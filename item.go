@@ -54,6 +54,9 @@ type Item struct {
 	HostId      string    `json:"hostid"`
 	InterfaceId string    `json:"interfaceid,omitempty"`
 	Key         string    `json:"key_"`
+	Lastvalue   string    `json:"lastvalue"`
+	Lastclock   string    `json:"lastclock"`
+	Units       string    `json:"units"`
 	Name        string    `json:"name"`
 	Type        ItemType  `json:"type"`
 	ValueType   ValueType `json:"value_type"`
@@ -105,6 +108,21 @@ func (api *API) ItemsGetByApplicationId(id string) (res Items, err error) {
 // Wrapper for item.create: https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/create
 func (api *API) ItemsCreate(items Items) (err error) {
 	response, err := api.CallWithError("item.create", items)
+	if err != nil {
+		return
+	}
+
+	result := response.Result.(map[string]interface{})
+	itemids := result["itemids"].([]interface{})
+	for i, id := range itemids {
+		items[i].ItemId = id.(string)
+	}
+	return
+}
+
+// Wrapper for item.update: https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/update
+func (api *API) ItemsUpdate(items Items) (err error) {
+	response, err := api.CallWithError("item.update", items)
 	if err != nil {
 		return
 	}
