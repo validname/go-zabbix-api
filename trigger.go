@@ -49,6 +49,7 @@ type Function struct {
 	Parameter  string `json:"parameter"`
 }
 
+// https://www.zabbix.com/documentation/2.0/manual/appendix/api/trigger/definitions
 type Trigger struct {
 	TriggerId   int64             `json:"triggerid,string"`
 	Description string            `json:"description"`
@@ -67,7 +68,7 @@ type Trigger struct {
 	ValueFlags  TriggerValueFlags `json:"value_flags,string"`
 }
 
-//wraper para get.trigger
+// Wrapper for trigger.get: https://www.zabbix.com/documentation/2.0/manual/appendix/api/trigger/get
 func (api *API) GetTrigger(params Params) ([]Trigger, error) {
 	if _, present := params["output"]; !present {
 		params["output"] = "extend"
@@ -89,5 +90,19 @@ func (api *API) GetTrigger(params Params) ([]Trigger, error) {
 	err = json.Unmarshal(response, &r)
 
 	return r.Result, err
+}
 
+// Wrapper for trigger.create: https://www.zabbix.com/documentation/2.0/manual/appendix/api/trigger/create
+func (api *API) TriggerCreate(trigger Trigger) (err error) {
+	response, err := api.CallWithError("trigger.create", trigger)
+	if err != nil {
+		return
+	}
+
+	result := response.Result.(map[string]interface{})
+	triggerids := result["triggerids"].([]interface{})
+	for _, id := range triggerids {
+		trigger.TriggerId = id.(string)
+	}
+	return
 }
