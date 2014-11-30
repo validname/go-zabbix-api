@@ -150,4 +150,3 @@ func (api *API) TriggersCreate(triggers Triggers) (err error) {
 	}
 	return
 }
-
