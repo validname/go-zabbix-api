@@ -28,8 +28,9 @@ const (
 	Nomultiple            TriggerType = 0
 	GenerateMulipleEvents TriggerType = 1
 
-	TriggerOk      TriggerValue = 0
-	TriggerProblem TriggerValue = 1
+	TriggerOk        TriggerValue = 0
+	TriggerProblem   TriggerValue = 1
+	TriggerUnknown18 TriggerValue = 2
 
 	TriggerUpToDate TriggerValueFlags = 0
 	TriggerUnknown  TriggerValueFlags = 1
@@ -89,6 +90,16 @@ func (api *API) TriggersGet(params Params) (res Triggers, err error) {
 		return
 	}
 	reflector.MapsToStructs2(response.Result.([]interface{}), &res, reflector.Strconv, "json")
+
+	// mimic Zabbix 1.8 status values to a newer ones
+	if api.bVer(2, 0, 0) == false {
+		for _, trigger := range res {
+			if trigger.Value == TriggerUnknown18 {
+				trigger.ValueFlags = TriggerUnknown
+				trigger.Value = TriggerOk
+			}
+		}
+	}
 	return
 }
 
