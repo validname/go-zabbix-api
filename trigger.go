@@ -22,17 +22,17 @@ const (
 	High        TriggerPriority = 4
 	Disaster    TriggerPriority = 5
 
-	Enabled  TriggerStatus = 0
-	Disabled TriggerStatus = 1
+	TriggerEnabled  TriggerStatus = 0
+	TriggerDisabled TriggerStatus = 1
 
 	Nomultiple            TriggerType = 0
 	GenerateMulipleEvents TriggerType = 1
 
-	Ok      TriggerValue = 0
-	Problem TriggerValue = 1
+	TriggerOk      TriggerValue = 0
+	TriggerProblem TriggerValue = 1
 
-	UpToDate TriggerValueFlags = 0
-	Unknown  TriggerValueFlags = 1
+	TriggerUpToDate TriggerValueFlags = 0
+	TriggerUnknown  TriggerValueFlags = 1
 )
 
 type Function struct {
