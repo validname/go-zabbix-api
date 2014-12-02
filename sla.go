@@ -2,7 +2,8 @@ package zabbix
 
 //import "github.com/AlekSi/reflector"
 
-// https://www.zabbix.com/documentation/2.0/manual/appendix/api/history/definitions
+// SLA object
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/history/definitions
 type SLA struct {
 	From         float64 `json:"from,omitempty"`
 	To           float64 `json:"to"`
@@ -13,7 +14,8 @@ type SLA struct {
 	HostId       int64   `json:"hostid"`
 }
 
-// Wrapper for item.get https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/get
+// SlaGet is a wrapper for 'service.getsla'
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/service/getsla
 func (api *API) SlaGet(params Params) (res *SLA, err error) {
 	if _, ok := params["output"]; !ok {
 		params["output"] = "extend"

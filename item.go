@@ -47,7 +47,8 @@ const (
 	Delta DeltaType = 2
 )
 
-// https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/definitions
+// Item object
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/definitions
 type Item struct {
 	ItemId      string    `json:"itemid,omitempty"`
 	Delay       int       `json:"delay"`
@@ -86,7 +87,8 @@ func (items Items) ByKey() (res map[string]Item) {
 	return
 }
 
-// Wrapper for item.get https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/get
+// ItemsGet is a wrapper for 'item.get'
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/get
 func (api *API) ItemsGet(params Params) (res Items, err error) {
 	if _, ok := params["output"]; !ok {
 		params["output"] = "extend"
@@ -100,12 +102,13 @@ func (api *API) ItemsGet(params Params) (res Items, err error) {
 	return
 }
 
-// Gets items by application Id.
+// ItemsGetByApplicationId gets items by application Id.
 func (api *API) ItemsGetByApplicationId(id string) (res Items, err error) {
 	return api.ItemsGet(Params{"applicationids": id})
 }
 
-// Wrapper for item.create: https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/create
+// ItemsCreate is a wrapper for 'item.create'
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/create
 func (api *API) ItemsCreate(items Items) (err error) {
 	response, err := api.CallWithError("item.create", items)
 	if err != nil {
@@ -120,7 +123,8 @@ func (api *API) ItemsCreate(items Items) (err error) {
 	return
 }
 
-// Wrapper for item.update: https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/update
+// ItemsUpdate is a wrapper for 'item.update'
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/update
 func (api *API) ItemsUpdate(items Items) (err error) {
 	response, err := api.CallWithError("item.update", items)
 	if err != nil {
@@ -135,7 +139,9 @@ func (api *API) ItemsUpdate(items Items) (err error) {
 	return
 }
 
-// Wrapper for item.delete: https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/delete
+// ItemsDelete is a wrapper for 'item.delete'
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/delete
+// Delete by Items list
 // Cleans ItemId in all items elements if call succeed.
 func (api *API) ItemsDelete(items Items) (err error) {
 	ids := make([]string, len(items))
@@ -152,7 +158,9 @@ func (api *API) ItemsDelete(items Items) (err error) {
 	return
 }
 
-// Wrapper for item.delete: https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/delete
+// ItemsDeleteByIds is a wrapper for 'item.delete'
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/delete
+// Delete by Ids list
 func (api *API) ItemsDeleteByIds(ids []string) (err error) {
 	response, err := api.CallWithError("item.delete", ids)
 	if err != nil {

@@ -34,6 +34,9 @@ type AckType struct {
 	Alias   string `json:"alias"`
 }
 
+
+// Event object
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/event/definitions
 type Event struct {
 	EventId      int64      `json:"eventid,string"`
 	Source       SourceType `json:"source,string"`
@@ -46,7 +49,8 @@ type Event struct {
 	ValueChanged int64      `json:"value_changed,string"`
 }
 
-// Wrapper for event.get: https://www.zabbix.com/documentation/2.0/manual/appendix/api/event/get
+// GetEvents is a wrapper for 'event.get'
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/event/get
 func (api *API) GetEvents(params Params) ([]Event, error) {
 	if _, ok := params["output"]; !ok {
 		params["output"] = "extend"

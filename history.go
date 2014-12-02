@@ -2,7 +2,8 @@ package zabbix
 
 import "github.com/AlekSi/reflector"
 
-// https://www.zabbix.com/documentation/2.0/manual/appendix/api/history/definitions
+// History object
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/history/definitions
 type History struct {
 	ItemId      string `json:"itemid,omitempty"`
 	Clock       int    `json:"clock"`
@@ -15,7 +16,8 @@ type History struct {
 	Timestamp   int    `json:"timestamp,omitempty"`
 }
 
-// Wrapper for item.get https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/get
+// HistoriesGet is a wrapper for 'item.get'
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/history/get
 func (api *API) HistoriesGet(params Params) (res []History, err error) {
 	if _, ok := params["output"]; !ok {
 		params["output"] = "extend"

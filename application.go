@@ -4,7 +4,8 @@ import (
 	"github.com/AlekSi/reflector"
 )
 
-// https://www.zabbix.com/documentation/2.0/manual/appendix/api/application/definitions
+// Application object
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/application/definitions
 type Application struct {
 	ApplicationId string `json:"applicationid,omitempty"`
 	HostId        string `json:"hostid"`
@@ -14,7 +15,8 @@ type Application struct {
 
 type Applications []Application
 
-// Wrapper for application.get: https://www.zabbix.com/documentation/2.0/manual/appendix/api/application/get
+// ApplicationsGet is a wrapper for 'application.get'
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/application/get
 func (api *API) ApplicationsGet(params Params) (res Applications, err error) {
 	if _, ok := params["output"]; !ok {
 		params["output"] = "extend"
@@ -28,7 +30,7 @@ func (api *API) ApplicationsGet(params Params) (res Applications, err error) {
 	return
 }
 
-// Gets application by Id only if there is exactly 1 matching application.
+// ApplicationGetById gets application by Id only if there is exactly 1 matching application.
 func (api *API) ApplicationGetById(id string) (res *Application, err error) {
 	apps, err := api.ApplicationsGet(Params{"applicationids": id})
 	if err != nil {
@@ -44,7 +46,7 @@ func (api *API) ApplicationGetById(id string) (res *Application, err error) {
 	return
 }
 
-// Gets application by host Id and name only if there is exactly 1 matching application.
+// ApplicationGetByHostIdAndName gets application by host Id and name only if there is exactly 1 matching application.
 func (api *API) ApplicationGetByHostIdAndName(hostId, name string) (res *Application, err error) {
 	apps, err := api.ApplicationsGet(Params{"hostids": hostId, "filter": map[string]string{"name": name}})
 	if err != nil {
@@ -60,7 +62,8 @@ func (api *API) ApplicationGetByHostIdAndName(hostId, name string) (res *Applica
 	return
 }
 
-// Wrapper for application.create: https://www.zabbix.com/documentation/2.0/manual/appendix/api/application/create
+// ApplicationsCreate is a wrapper for 'application.create'
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/application/create
 func (api *API) ApplicationsCreate(apps Applications) (err error) {
 	response, err := api.CallWithError("application.create", apps)
 	if err != nil {
@@ -75,7 +78,9 @@ func (api *API) ApplicationsCreate(apps Applications) (err error) {
 	return
 }
 
-// Wrapper for application.delete: https://www.zabbix.com/documentation/2.0/manual/appendix/api/application/delete
+// ApplicationsDelete is a wrapper for 'application.delete'
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/application/delete
+// Deletes applications by given application list
 // Cleans ApplicationId in all apps elements if call succeed.
 func (api *API) ApplicationsDelete(apps Applications) (err error) {
 	ids := make([]string, len(apps))
@@ -92,7 +97,9 @@ func (api *API) ApplicationsDelete(apps Applications) (err error) {
 	return
 }
 
-// Wrapper for application.delete: https://www.zabbix.com/documentation/2.0/manual/appendix/api/application/delete
+// ApplicationsDeleteByIds is a wrapper for 'application.delete'
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/application/delete
+// Deletes applications by given Id list
 func (api *API) ApplicationsDeleteByIds(ids []string) (err error) {
 	response, err := api.CallWithError("application.delete", ids)
 	if err != nil {

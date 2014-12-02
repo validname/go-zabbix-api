@@ -72,7 +72,7 @@ type API struct {
 	version Version
 }
 
-// Creates new API access object.
+// NewAPI creates new API access object.
 // Typical URL is http://host/api_jsonrpc.php or http://host/zabbix/api_jsonrpc.php.
 // It also may contain HTTP basic auth username and password like
 // http://username:password@host/api_jsonrpc.php.
@@ -80,7 +80,7 @@ func NewAPI(url string) (api *API) {
 	return &API{url: url, c: http.Client{}}
 }
 
-// Allows one to use specific http.Client, for example with InsecureSkipVerify transport.
+// SetClient allows one to use specific http.Client, for example with InsecureSkipVerify transport.
 func (api *API) SetClient(c *http.Client) {
 	api.c = *c
 }
@@ -91,6 +91,7 @@ func (api *API) printf(format string, v ...interface{}) {
 	}
 }
 
+// discoverVersion gets and stores Zabbix API version from the server
 func (api *API) discoverVersion() (err error) {
 	strVersion, err := api.Version()
 	versioninfo := strings.Split(strVersion, ".")
@@ -135,7 +136,7 @@ func (api *API) callBytes(method string, params interface{}) (b []byte, err erro
 	return
 }
 
-// Calls specified API method. Uses api.Auth if not empty.
+// Call calls specified API method. Uses api.Auth if not empty.
 // err is something network or marshaling related. Caller should inspect response.Error to get API error.
 func (api *API) Call(method string, params interface{}) (response Response, err error) {
 	b, err := api.callBytes(method, params)
@@ -145,7 +146,7 @@ func (api *API) Call(method string, params interface{}) (response Response, err 
 	return
 }
 
-// Uses Call() and then sets err to response.Error if former is nil and latter is not.
+// CallWithError uses Call() and then sets err to response.Error if former is nil and latter is not.
 func (api *API) CallWithError(method string, params interface{}) (response Response, err error) {
 	response, err = api.Call(method, params)
 	if err == nil && response.Error != nil {
@@ -154,7 +155,7 @@ func (api *API) CallWithError(method string, params interface{}) (response Respo
 	return
 }
 
-// Calls "user.login" API method and fills api.Auth field.
+// Login calls "user.login" API method and fills api.Auth field.
 func (api *API) Login(user, password string) (auth string, err error) {
 	params := map[string]string{"user": user, "password": password}
 	response, err := api.CallWithError("user.login", params)
@@ -168,7 +169,7 @@ func (api *API) Login(user, password string) (auth string, err error) {
 	return
 }
 
-// Calls "APIInfo.version" API method
+// Version gets Zabbix API version from the server
 func (api *API) Version() (v string, err error) {
 	response, err := api.CallWithError("APIInfo.version", Params{})
 	if err != nil {
@@ -179,7 +180,7 @@ func (api *API) Version() (v string, err error) {
 	return
 }
 
-// isVersionBigger return true if version of Zabbix API is bigger than version compared with
+// isVersionBigger returns true if version of Zabbix API is bigger than version compared with
 func (api *API) isVersionBigger(major int, minor int, release int) bool {
 	if api.version.Major != major {
 		return api.version.Major > major

@@ -43,7 +43,8 @@ type Function struct {
 	Parameter  string `json:"parameter"`
 }
 
-// https://www.zabbix.com/documentation/2.0/manual/appendix/api/trigger/definitions
+// Trigger object
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/trigger/definitions
 type Trigger struct {
 	TriggerId   string            `json:"triggerid,string"`
 	Description string            `json:"description"`
@@ -67,7 +68,8 @@ type Trigger struct {
 
 type Triggers []Trigger
 
-// Wrapper for trigger.get: https://www.zabbix.com/documentation/2.0/manual/appendix/api/trigger/get
+// TriggersGet is a wrapper for 'trigger.get'
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/trigger/get
 func (api *API) TriggersGet(params Params) (result Triggers, err error) {
 	if _, ok := params["output"]; !ok {
 		params["output"] = "extend"
@@ -103,7 +105,7 @@ func (api *API) TriggersGet(params Params) (result Triggers, err error) {
 	return
 }
 
-// Get trigger extended information by Id only if there is exactly 1 matching trigger
+// TriggerGetById gets trigger extended information by Id only if there is exactly 1 matching trigger
 func (api *API) TriggerGetById(id string) (result *Trigger, err error) {
 	params := map[string]interface{}{
 		"output":            "extend",
@@ -126,8 +128,7 @@ func (api *API) TriggerGetById(id string) (result *Trigger, err error) {
 	return
 }
 
-// Return triggers on hosts which was inherited from template trigger
-//
+// TriggersGetInheritedFromId gets triggers on hosts which was inherited from template trigger
 func (api *API) TriggersGetInheritedFromId(id string,
 	OptionalFilters ...map[string]string) (result Triggers, err error) {
 
@@ -151,7 +152,8 @@ func (api *API) TriggersGetInheritedFromId(id string,
 	return api.TriggersGet(params)
 }
 
-// Wrapper for trigger.create: https://www.zabbix.com/documentation/2.0/manual/appendix/api/trigger/create
+// TriggersCreate is a wrapper for 'trigger.create'
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/trigger/create
 func (api *API) TriggersCreate(triggers Triggers) (err error) {
 	response, err := api.CallWithError("trigger.create", triggers)
 	if err != nil {
