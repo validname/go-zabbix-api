@@ -54,8 +54,8 @@ type Item struct {
 	HostId      string    `json:"hostid"`
 	InterfaceId string    `json:"interfaceid,omitempty"`
 	Key         string    `json:"key_"`
-	Lastvalue   string    `json:"lastvalue"`
-	Lastclock   string    `json:"lastclock"`
+	LastValue   string    `json:"lastvalue"`
+	LastClock   string    `json:"lastclock"`
 	Units       string    `json:"units"`
 	Name        string    `json:"name"`
 	Type        ItemType  `json:"type"`

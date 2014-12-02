@@ -68,7 +68,7 @@ type Trigger struct {
 type Triggers []Trigger
 
 // Wrapper for trigger.get: https://www.zabbix.com/documentation/2.0/manual/appendix/api/trigger/get
-func (api *API) TriggersGet(params Params) (res Triggers, err error) {
+func (api *API) TriggersGet(params Params) (result Triggers, err error) {
 	if _, present := params["output"]; !present {
 		params["output"] = "extend"
 	}
@@ -89,11 +89,11 @@ func (api *API) TriggersGet(params Params) (res Triggers, err error) {
 	if err != nil {
 		return
 	}
-	reflector.MapsToStructs2(response.Result.([]interface{}), &res, reflector.Strconv, "json")
+	reflector.MapsToStructs2(response.Result.([]interface{}), &result, reflector.Strconv, "json")
 
 	// mimic Zabbix 1.8 status values to a newer ones
-	if api.bVer(2, 0, 0) == false {
-		for _, trigger := range res {
+	if !api.bVer(2, 0, 0) {
+		for _, trigger := range result {
 			if trigger.Value == TriggerUnknown18 {
 				trigger.ValueFlags = TriggerUnknown
 				trigger.Value = TriggerOk
@@ -104,20 +104,21 @@ func (api *API) TriggersGet(params Params) (res Triggers, err error) {
 }
 
 // Get trigger extended information by Id only if there is exactly 1 matching trigger
-func (api *API) TriggerGetById(id string) (res *Trigger, err error) {
-	params := make( map [string]interface{} )
-	params["output"] = "extend"
-	params["expandExpression"] = "extend"
-	params["expandDescription"] = "flag"
-	params["expandData"] = "extend"
-	params["selectFunctions"] = "extend"
+func (api *API) TriggerGetById(id string) (result *Trigger, err error) {
+	params := map[string]interface{} {
+		"output": "extend",
+		"expandExpression": "extend",
+		"expandDescription": "flag",
+		"expandData": "extend",
+		"selectFunctions": "extend",
+	}
 
 	triggers, err := api.TriggersGet(params)
 	if err != nil {
 		return
 	}
 	if len(triggers) == 1 {
-		res = &triggers[0]
+		result = &triggers[0]
 	} else {
 		e := ExpectedOneResult(len(triggers))
 		err = &e
@@ -127,19 +128,22 @@ func (api *API) TriggerGetById(id string) (res *Trigger, err error) {
 
 // Return triggers on hosts which was inherited from template trigger
 // 
-func (api *API) TriggersGetInheritedFromId(id string, optional_filters ...map[string]string) (res Triggers, err error) {
-	params := make( map [string]interface{} )
-	params["output"] = "extend"
-	params["expandExpression"] = "extend"
-	params["expandDescription"] = "flag"
-	params["expandData"] = "extend"
-	params["inherited"] = 1
+func (api *API) TriggersGetInheritedFromId(id string, 
+	OptionalFilters ...map[string]string) (result Triggers, err error) {
+
+	params := map[string]interface{} {
+		"output": "extend",
+		"expandExpression": "extend",
+		"expandDescription": "flag",
+		"expandData": "extend",
+		"inherited": 1,
+	}
 
 	filter := make( map [string]string )
 	filter["templateid"] = id
 
-	for _, optional_filter := range optional_filters {
-		for property, value := range optional_filter {
+	for _, optionalFilter := range OptionalFilters {
+		for property, value := range optionalFilter {
 			filter[property] = value
 		}
 	}

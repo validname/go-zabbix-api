@@ -12,7 +12,7 @@ type History struct {
 	LogEventId  int    `json:"logeventid,omitempty"`
 	Severity    int    `json:"severity,omitempty"`
 	Source      string `json:"source,omitempty"`
-	TimeStamp   int    `json:"timestamp,omitempty"`
+	Timestamp   int    `json:"timestamp,omitempty"`
 }
 
 // Wrapper for item.get https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/get
