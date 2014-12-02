@@ -64,12 +64,12 @@ func (e *ExpectedMore) Error() string {
 }
 
 type API struct {
-	Auth        string      // auth token, filled by Login()
-	Logger      *log.Logger // request/response logger, nil by default
-	url         string
-	c           http.Client
-	id          int32
-	versioninfo Version
+	Auth    string      // auth token, filled by Login()
+	Logger  *log.Logger // request/response logger, nil by default
+	url     string
+	c       http.Client
+	id      int32
+	version Version
 }
 
 // Creates new API access object.
@@ -91,20 +91,17 @@ func (api *API) printf(format string, v ...interface{}) {
 	}
 }
 
-func (api *API) setVersion() (err error) {
+func (api *API) discoverVersion() (err error) {
 	strVersion, err := api.Version()
-	//api.printf("strVersion: %s", strVersion)
-	var versioninfo []string
-	versioninfo = strings.Split(strVersion, ".")
+	versioninfo := strings.Split(strVersion, ".")
 
 	if len(versioninfo) != 3 {
-		err = errors.New("Unable to determine version")
-		return
+		return errors.New("Unable to determine version")
 	}
 
-	api.versioninfo.Major, err = strconv.Atoi(versioninfo[0])
-	api.versioninfo.Minor, err = strconv.Atoi(versioninfo[1])
-	api.versioninfo.Release, err = strconv.Atoi(versioninfo[2])
+	api.version.Major, err = strconv.Atoi(versioninfo[0])
+	api.version.Minor, err = strconv.Atoi(versioninfo[1])
+	api.version.Release, err = strconv.Atoi(versioninfo[2])
 
 	return
 }
@@ -167,8 +164,7 @@ func (api *API) Login(user, password string) (auth string, err error) {
 
 	auth = response.Result.(string)
 	api.Auth = auth
-	// force discover Zabbix version
-	api.setVersion()
+	api.discoverVersion()
 	return
 }
 
@@ -183,14 +179,13 @@ func (api *API) Version() (v string, err error) {
 	return
 }
 
-func (api *API) bVer(major int, minor int, release int) bool {
-	if api.versioninfo.Major > major {
-		return true
-	} else if api.versioninfo.Major == major && api.versioninfo.Minor >= minor {
-		return true
-	} else if api.versioninfo.Major == major && api.versioninfo.Minor == minor && api.versioninfo.Release >= release {
-		return true
+// isVersionBigger return true if version of Zabbix API is bigger than version compared with
+func (api *API) isVersionBigger(major int, minor int, release int) bool {
+	if api.version.Major != major {
+		return api.version.Major > major
 	}
-
-	return false
+	if api.version.Minor != minor {
+		return api.version.Minor > minor
+	}
+	return api.version.Release >= release
 }

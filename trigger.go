@@ -92,7 +92,7 @@ func (api *API) TriggersGet(params Params) (result Triggers, err error) {
 	reflector.MapsToStructs2(response.Result.([]interface{}), &result, reflector.Strconv, "json")
 
 	// mimic Zabbix 1.8 status values to a newer ones
-	if !api.bVer(2, 0, 0) {
+	if !api.isVersionBigger(2, 0, 0) {
 		for _, trigger := range result {
 			if trigger.Value == TriggerUnknown18 {
 				trigger.ValueFlags = TriggerUnknown
