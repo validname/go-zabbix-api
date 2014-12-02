@@ -15,12 +15,12 @@ const (
 	PlainTrigger      TriggerFlags = 0
 	DiscoveredTrigger TriggerFlags = 4
 
-	NoClssified TriggerPriority = 0
-	Information TriggerPriority = 1
-	Warning     TriggerPriority = 2
-	Average     TriggerPriority = 3
-	High        TriggerPriority = 4
-	Disaster    TriggerPriority = 5
+	NotClassified TriggerPriority = 0
+	Information   TriggerPriority = 1
+	Warning       TriggerPriority = 2
+	Average       TriggerPriority = 3
+	High          TriggerPriority = 4
+	Disaster      TriggerPriority = 5
 
 	TriggerEnabled  TriggerStatus = 0
 	TriggerDisabled TriggerStatus = 1
@@ -28,12 +28,12 @@ const (
 	Nomultiple            TriggerType = 0
 	GenerateMulipleEvents TriggerType = 1
 
-	TriggerOk        TriggerValue = 0
-	TriggerProblem   TriggerValue = 1
-	TriggerUnknown18 TriggerValue = 2
+	TriggerValueOk      TriggerValue = 0
+	TriggerValueProblem TriggerValue = 1
+	TriggerValueUnknown TriggerValue = 2
 
-	TriggerUpToDate TriggerValueFlags = 0
-	TriggerUnknown  TriggerValueFlags = 1
+	TriggerValueFlagsUpToDate TriggerValueFlags = 0
+	TriggerValueFlagsUnknown  TriggerValueFlags = 1
 )
 
 type Function struct {
@@ -96,9 +96,9 @@ func (api *API) TriggersGet(params Params) (result Triggers, err error) {
 	// mimic Zabbix 1.8 status values to a newer ones
 	if !api.isVersionBigger(2, 0, 0) {
 		for _, trigger := range result {
-			if trigger.Value == TriggerUnknown18 {
-				trigger.ValueFlags = TriggerUnknown
-				trigger.Value = TriggerOk
+			if trigger.Value == TriggerValueUnknown {
+				trigger.ValueFlags = TriggerValueFlagsUnknown
+				trigger.Value = TriggerValueOk
 			}
 		}
 	}
