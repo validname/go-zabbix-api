@@ -142,9 +142,10 @@ func (api *API) TriggersGetInheritedFromId(id string, Filter map[string]string) 
 	filter := make(map[string]string)
 	filter["templateid"] = id
 
-	if Filter != nil {
-		params["filter"] = filter
+	for property, value := range Filter {
+		filter[property] = value
 	}
+	params["filter"] = filter
 	return api.TriggersGet(params)
 }
 
