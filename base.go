@@ -101,9 +101,17 @@ func (api *API) discoverVersion() (err error) {
 	}
 
 	api.version.Major, err = strconv.Atoi(versioninfo[0])
+	if err != nil {
+		return err
+	}
 	api.version.Minor, err = strconv.Atoi(versioninfo[1])
+	if err != nil {
+		return err
+	}
 	api.version.Release, err = strconv.Atoi(versioninfo[2])
-
+	if err != nil {
+		return err
+	}
 	return
 }
 

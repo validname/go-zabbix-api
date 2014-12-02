@@ -63,9 +63,9 @@ func (api *API) GetEvents(params Params) ([]Event, error) {
 	if err != nil {
 		return nil, err
 	}
-	r := ResponseEvent{}
-	err = json.Unmarshal(response, &r)
+	responseData := ResponseEvent{}
+	err = json.Unmarshal(response, &responseData)
 
-	return r.Result, err
+	return responseData.Result, err
 
 }
