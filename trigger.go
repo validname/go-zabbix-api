@@ -129,9 +129,8 @@ func (api *API) TriggerGetById(id string) (result *Trigger, err error) {
 }
 
 // TriggersGetInheritedFromId gets triggers on hosts which was inherited from template trigger
-func (api *API) TriggersGetInheritedFromId(id string,
-	OptionalFilters ...map[string]string) (result Triggers, err error) {
-
+// Use nil for empty filter
+func (api *API) TriggersGetInheritedFromId(id string, Filter map[string]string) (result Triggers, err error) {
 	params := map[string]interface{}{
 		"output":            "extend",
 		"expandExpression":  "extend",
@@ -143,12 +142,9 @@ func (api *API) TriggersGetInheritedFromId(id string,
 	filter := make(map[string]string)
 	filter["templateid"] = id
 
-	for _, optionalFilter := range OptionalFilters {
-		for property, value := range optionalFilter {
-			filter[property] = value
-		}
+	if Filter != nil {
+		params["filter"] = filter
 	}
-	params["filter"] = filter
 	return api.TriggersGet(params)
 }
 
