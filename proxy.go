@@ -15,7 +15,7 @@ type Proxies []Proxy
 
 // Wrapper for host.get: https://www.zabbix.com/documentation/2.0/manual/appendix/api/proxy/get
 func (api *API) ProxyGet(params Params) (res Proxies, err error) {
-	if _, present := params["output"]; !present {
+	if _, ok := params["output"]; !ok {
 		params["output"] = "extend"
 	}
 	response, err := api.CallWithError("proxy.get", params)

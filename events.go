@@ -46,12 +46,12 @@ type Event struct {
 	ValueChanged int64      `json:"value_changed,string"`
 }
 
-//wraper para get.trigger
+// Wrapper for event.get: https://www.zabbix.com/documentation/2.0/manual/appendix/api/event/get
 func (api *API) GetEvents(params Params) ([]Event, error) {
-	if _, present := params["output"]; !present {
+	if _, ok := params["output"]; !ok {
 		params["output"] = "extend"
 	}
-	if _, present2 := params["select_acknowledges"]; !present2 {
+	if _, ok := params["select_acknowledges"]; !ok {
 		params["select_acknowledges"] = "extend"
 	}
 

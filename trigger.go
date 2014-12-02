@@ -69,19 +69,19 @@ type Triggers []Trigger
 
 // Wrapper for trigger.get: https://www.zabbix.com/documentation/2.0/manual/appendix/api/trigger/get
 func (api *API) TriggersGet(params Params) (result Triggers, err error) {
-	if _, present := params["output"]; !present {
+	if _, ok := params["output"]; !ok {
 		params["output"] = "extend"
 	}
-	if _, present := params["expandExpression"]; !present {
+	if _, ok := params["expandExpression"]; !ok {
 		params["expandExpression"] = "extend"
 	}
-	if _, present := params["expandDescription"]; !present {
+	if _, ok := params["expandDescription"]; !ok {
 		params["expandDescription"] = "flag"
 	}
-	if _, present := params["expandData"]; !present {
+	if _, ok := params["expandData"]; !ok {
 		params["expandData"] = "extend"
 	}
-	if _, present := params["selectFunctions"]; !present {
+	if _, ok := params["selectFunctions"]; !ok {
 		params["selectFunctions"] = "extend"
 	}
 

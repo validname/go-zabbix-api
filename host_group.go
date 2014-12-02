@@ -30,7 +30,7 @@ type HostGroupIds []HostGroupId
 
 // Wrapper for hostgroup.get: https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostgroup/get
 func (api *API) HostGroupsGet(params Params) (res HostGroups, err error) {
-	if _, present := params["output"]; !present {
+	if _, ok := params["output"]; !ok {
 		params["output"] = "extend"
 	}
 	response, err := api.CallWithError("hostgroup.get", params)

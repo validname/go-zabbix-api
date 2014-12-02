@@ -16,7 +16,7 @@ type Applications []Application
 
 // Wrapper for application.get: https://www.zabbix.com/documentation/2.0/manual/appendix/api/application/get
 func (api *API) ApplicationsGet(params Params) (res Applications, err error) {
-	if _, present := params["output"]; !present {
+	if _, ok := params["output"]; !ok {
 		params["output"] = "extend"
 	}
 	response, err := api.CallWithError("application.get", params)

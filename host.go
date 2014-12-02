@@ -36,7 +36,7 @@ type Hosts []Host
 
 // Wrapper for host.get: https://www.zabbix.com/documentation/2.0/manual/appendix/api/host/get
 func (api *API) HostsGet(params Params) (res Hosts, err error) {
-	if _, present := params["output"]; !present {
+	if _, ok := params["output"]; !ok {
 		params["output"] = "extend"
 	}
 	response, err := api.CallWithError("host.get", params)

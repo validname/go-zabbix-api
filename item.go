@@ -77,8 +77,8 @@ type Items []Item
 func (items Items) ByKey() (res map[string]Item) {
 	res = make(map[string]Item, len(items))
 	for _, i := range items {
-		_, present := res[i.Key]
-		if present {
+		_, ok := res[i.Key]
+		if ok {
 			panic(fmt.Errorf("Duplicate key %s", i.Key))
 		}
 		res[i.Key] = i
@@ -88,7 +88,7 @@ func (items Items) ByKey() (res map[string]Item) {
 
 // Wrapper for item.get https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/get
 func (api *API) ItemsGet(params Params) (res Items, err error) {
-	if _, present := params["output"]; !present {
+	if _, ok := params["output"]; !ok {
 		params["output"] = "extend"
 	}
 	response, err := api.CallWithError("item.get", params)

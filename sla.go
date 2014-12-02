@@ -15,7 +15,7 @@ type SLA struct {
 
 // Wrapper for item.get https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/get
 func (api *API) SlaGet(params Params) (res *SLA, err error) {
-	if _, present := params["output"]; !present {
+	if _, ok := params["output"]; !ok {
 		params["output"] = "extend"
 	}
 	response, err := api.CallWithError("service.getsla", params)
