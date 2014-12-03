@@ -107,7 +107,7 @@ func (api *API) TriggersGet(params Params) (result Triggers, err error) {
 
 // TriggerGetById gets trigger extended information by Id only if there is exactly 1 matching trigger
 func (api *API) TriggerGetById(id string) (result *Trigger, err error) {
-	params := map[string]interface{}{
+	params := Params{
 		"output":            "extend",
 		"expandExpression":  "extend",
 		"expandDescription": "flag",
@@ -129,19 +129,18 @@ func (api *API) TriggerGetById(id string) (result *Trigger, err error) {
 }
 
 // TriggersGetInheritedFromId gets triggers on hosts which was inherited from template trigger
-// Use nil for empty filter
-func (api *API) TriggersGetInheritedFromId(id string, Filter map[string]string) (result Triggers, err error) {
-	params := map[string]interface{}{
-		"output":            "extend",
-		"expandExpression":  "extend",
-		"expandDescription": "flag",
-		"expandData":        "extend",
-		"inherited":         1,
+// Use nil for empty additional parameters or filter
+func (api *API) TriggersGetInheritedFromId(id string, params Params, Filter map[string]string) (result Triggers, err error) {
+	if params==nil {
+		params = make(Params)
 	}
+	params["output"] = "extend"
+	params["expandExpression"] = "extend"
+	params["expandDescription"] = "flag"
+	params["expandData"] = "extend"
+	params["inherited"] = 1
 
-	filter := make(map[string]string)
-	filter["templateid"] = id
-
+	filter := map[string]string { "templateid": id }
 	for property, value := range Filter {
 		filter[property] = value
 	}
