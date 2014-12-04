@@ -1,6 +1,8 @@
 package zabbix
 
-import "github.com/AlekSi/reflector"
+import (
+	"encoding/json"
+)
 
 type (
 	TriggerFlags      int
@@ -36,6 +38,14 @@ const (
 	TriggerValueFlagsUnknown  TriggerValueFlags = 1
 )
 
+type TriggerResponse struct {
+	Jsonrpc string      `json:"jsonrpc"`
+	Error   *Error      `json:"error"`
+	//Result  interface{} `json:"result"`
+	Result  []json.RawMessage `json:"result"`
+	Id      int32            `json:"id"`
+}
+
 type Function struct {
 	FunctionId int64  `json:"functionid,string"`
 	ItemId     int64  `json:"itemid,string"`
@@ -46,7 +56,7 @@ type Function struct {
 // Trigger object
 // see https://www.zabbix.com/documentation/2.0/manual/appendix/api/trigger/definitions
 type Trigger struct {
-	TriggerId   string            `json:"triggerid,string"`
+	TriggerId   string            `json:"triggerid"`
 	Description string            `json:"description"`
 	Functions   []Function        `json:"functions"`
 	Expression  string            `json:"expression"`
@@ -62,8 +72,9 @@ type Trigger struct {
 	Value       TriggerValue      `json:"value,string"`
 	ValueFlags  TriggerValueFlags `json:"value_flags,string"`
 	// only when expandData flag is set
-	HostId string `json:"hostid,string"`
-	Host   string `json:"host,string"`
+	//HostId string `json:"hostid,string"`
+	HostId string `json:"hostid"`
+	Host   string `json:"host"`
 }
 
 type Triggers []Trigger
@@ -75,25 +86,58 @@ func (api *API) TriggersGet(params Params) (result Triggers, err error) {
 		params["output"] = "extend"
 	}
 	if _, ok := params["expandExpression"]; !ok {
-		params["expandExpression"] = "extend"
+		params["expandExpression"] = "true"
 	}
 	if _, ok := params["expandDescription"]; !ok {
-		params["expandDescription"] = "flag"
+		params["expandDescription"] = "true"
 	}
 	if _, ok := params["expandData"]; !ok {
-		params["expandData"] = "extend"
+		params["expandData"] = "true"
 	}
 	if _, ok := params["selectFunctions"]; !ok {
-		params["selectFunctions"] = "extend"
+		params["selectFunctions"] = "true"
 	}
 
-	response, err := api.CallWithError("trigger.get", params)
+	if !api.isVersionBigger(2, 0, 0) {
+		// Transform parameters for Zabbix 1.8
+		if _, ok := params["expandDescription"]; ok {
+			params["expandDescription"] = "extend"
+		}
+		if _, ok := params["expandData"]; ok {
+			params["expandData"] = "extend"
+		}
+		if _, ok := params["selectFunctions"]; ok {
+			params["select_functions"] = "extend"
+		}
+	}
+
+	/* Warning! Reflector by AlekSi (from github.com/AlekSi/reflector)
+	 * which used in original parts of that API implementation
+	 * has some error which caused empty slices, e.g. Trigger.Functions
+	 * So we do manual unmarshalling. */
+	var response TriggerResponse
+	b, err := api.callBytes("trigger.get", params)
+	if err == nil {
+		err = json.Unmarshal(b, &response)
+	}
+	if err == nil && response.Error != nil {
+		err = response.Error
+	}
 	if err != nil {
 		return
 	}
-	reflector.MapsToStructs2(response.Result.([]interface{}), &result, reflector.Strconv, "json")
 
-	// mimic Zabbix 1.8 status values to a newer ones
+	result = make(Triggers, 0)
+	var trigger Trigger
+	for _, triggerJson := range response.Result {
+		err = json.Unmarshal(triggerJson, &trigger)
+		if err != nil {
+			return
+		}
+		result = append(result, trigger)
+	}
+
+	// transform Zabbix 1.8 status values to a newer ones
 	if !api.isVersionBigger(2, 0, 0) {
 		for _, trigger := range result {
 			if trigger.Value == TriggerValueUnknown {
@@ -109,10 +153,11 @@ func (api *API) TriggersGet(params Params) (result Triggers, err error) {
 func (api *API) TriggerGetById(id string) (result *Trigger, err error) {
 	params := Params{
 		"output":            "extend",
-		"expandExpression":  "extend",
-		"expandDescription": "flag",
-		"expandData":        "extend",
-		"selectFunctions":   "extend",
+		"expandExpression":  "true",
+		"expandDescription": "true",
+		"expandData":        "true",
+		"selectFunctions":   "true",
+		"triggerids":         []string{ id },
 	}
 
 	triggers, err := api.TriggersGet(params)
@@ -135,9 +180,9 @@ func (api *API) TriggersGetInheritedFromId(id string, params Params, Filter map[
 		params = make(Params)
 	}
 	params["output"] = "extend"
-	params["expandExpression"] = "extend"
-	params["expandDescription"] = "flag"
-	params["expandData"] = "extend"
+	params["expandExpression"] = "true"
+	params["expandDescription"] = "true"
+	params["expandData"] = "true"
 	params["inherited"] = 1
 
 	filter := map[string]string { "templateid": id }
@@ -145,6 +190,25 @@ func (api *API) TriggersGetInheritedFromId(id string, params Params, Filter map[
 		filter[property] = value
 	}
 	params["filter"] = filter
+	return api.TriggersGet(params)
+}
+
+// TriggersGetByTemplateId gets triggers from template by it's Id
+// Use nil for empty additional parameters or filter
+func (api *API) TriggersGetByTemplateId(id string, params Params, Filter map[string]string) (result Triggers, err error) {
+	if params==nil {
+		params = make(Params)
+	}
+	params["output"] = "extend"
+	params["expandExpression"] = "true"
+	params["expandDescription"] = "true"
+	params["expandData"] = "true"
+	params["templated"] = 1
+	params["templateids"] = []string{ id }
+
+	if Filter != nil {
+		params["filter"] = Filter
+	}
 	return api.TriggersGet(params)
 }
 
