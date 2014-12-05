@@ -25,6 +25,14 @@ type request struct {
 	Id      int32       `json:"id"`
 }
 
+type requestWithJson struct {
+	Jsonrpc string           `json:"jsonrpc"`
+	Method  string           `json:"method"`
+	Params  *json.RawMessage `json:"params"`
+	Auth    string           `json:"auth,omitempty"`
+	Id      int32            `json:"id"`
+}
+
 type Response struct {
 	Jsonrpc string      `json:"jsonrpc"`
 	Error   *Error      `json:"error"`
@@ -32,11 +40,11 @@ type Response struct {
 	Id      int32       `json:"id"`
 }
 
-type ResponseJson struct {
-	Jsonrpc string            `json:"jsonrpc"`
-	Error   *Error            `json:"error"`
-	Result  []json.RawMessage `json:"result"`
-	Id      int32             `json:"id"`
+type ResponseWithJson struct {
+	Jsonrpc string          `json:"jsonrpc"`
+	Error   *Error          `json:"error"`
+	Result  json.RawMessage `json:"result"`
+	Id      int32           `json:"id"`
 }
 
 type Error struct {
@@ -130,14 +138,19 @@ func (api *API) callBytes(method string, params interface{}) (b []byte, err erro
 		return
 	}
 	api.printf("Request : %s", b)
+	b, err = api.doJsonRpcRequest(b)
+	api.printf("Response: %s", b)
+	return
+}
 
-	req, err := http.NewRequest("POST", api.url, bytes.NewReader(b))
+func (api *API) doJsonRpcRequest(request []byte) (result []byte, err error) {
+	req, err := http.NewRequest("POST", api.url, bytes.NewReader(request))
 	if err != nil {
 		return
 	}
-	req.ContentLength = int64(len(b))
+	req.ContentLength = int64(len(request))
 	req.Header.Add("Content-Type", "application/json-rpc")
-	req.Header.Add("User-Agent", "github.com/AlekSi/zabbix")
+	req.Header.Add("User-Agent", "github.com/validname/go-zabbix-api")
 
 	res, err := api.c.Do(req)
 	if err != nil {
@@ -146,8 +159,22 @@ func (api *API) callBytes(method string, params interface{}) (b []byte, err erro
 	}
 	defer res.Body.Close()
 
-	b, err = ioutil.ReadAll(res.Body)
-	api.printf("Response: %s", b)
+	result, err = ioutil.ReadAll(res.Body)
+	return
+}
+
+// Call API with raw JSON query and get raw result
+func (api *API) CallJsonQuery(method string, JsonQuery string) (jsonBytes []byte, err error) {
+	id := atomic.AddInt32(&api.id, 1)
+	tmp := json.RawMessage(JsonQuery)
+	jsonObj := requestWithJson{"2.0", method, &tmp, api.Auth, id}
+	jsonBytes, err = json.Marshal(jsonObj)
+	if err != nil {
+		return
+	}
+	api.printf("Request : %s", jsonBytes)
+	jsonBytes, err = api.doJsonRpcRequest(jsonBytes)
+	api.printf("Response: %s", jsonBytes)
 	return
 }
 

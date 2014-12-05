@@ -1,8 +1,8 @@
 package zabbix
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 )
 
 type (
@@ -53,9 +53,9 @@ type HostId struct {
 
 type AppInfo struct {
 	HostList      []HostId `json:"hosts"`
-	ApplicationId string  `json:"applicationid"`
-	Name          string  `json:"name"`
-	TemplateId    string  `json:"templateid"`
+	ApplicationId string   `json:"applicationid"`
+	Name          string   `json:"name"`
+	TemplateId    string   `json:"templateid"`
 }
 
 // Item object
@@ -93,7 +93,7 @@ type Items []Item
 // Used only for for marshalling JSON in the ItemsCreate() function
 type ItemToCreate struct {
 	Item
-	ApplicationIds []string  `json:"applications,omitempty"`
+	ApplicationIds []string `json:"applications,omitempty"`
 }
 
 // Converts slice to map by key. Panics if there are duplicate keys.
@@ -132,7 +132,7 @@ func (api *API) ItemsGet(params Params) (result Items, err error) {
 	 * which used in original parts of that API implementation
 	 * has some error which caused empty slices, e.g. Item.Applications
 	 * So we do manual unmarshalling. */
-	var response ResponseJson
+	var response ResponseWithJson
 	b, err := api.callBytes("item.get", params)
 	if err == nil {
 		err = json.Unmarshal(b, &response)
@@ -145,21 +145,13 @@ func (api *API) ItemsGet(params Params) (result Items, err error) {
 	}
 
 	result = make(Items, 0)
-	var item Item
-	for _, itemJson := range response.Result {
-		err = json.Unmarshal(itemJson, &item)
-		if err != nil {
-			return
-		}
-		result = append(result, item)
-	}
-
+	err = json.Unmarshal(response.Result, &result)
 	return
 }
 
 // ItemGetById gets items by Id only if there is exactly 1 matching item.
 func (api *API) ItemGetById(id string) (result *Item, err error) {
-	items, err := api.ItemsGet(Params{ "itemids" : []string{ id }})
+	items, err := api.ItemsGet(Params{"itemids": []string{id}})
 	if err != nil {
 		return
 	}
@@ -169,7 +161,7 @@ func (api *API) ItemGetById(id string) (result *Item, err error) {
 		e := ExpectedOneResult(len(items))
 		err = &e
 	}
-	return 
+	return
 }
 
 // ItemsGetByApplicationId gets items by application Id.
@@ -190,7 +182,7 @@ func (api *API) ItemsCreate(items Items) (err error) {
 		copy(itemsToCreate[idx].ApplicationIds, itemsToCreate[idx].Item.ApplicationIds)
 		itemsToCreate[idx].Item.ApplicationIds = nil
 	}
-	
+
 	response, err := api.CallWithError("item.create", itemsToCreate)
 	if err != nil {
 		return

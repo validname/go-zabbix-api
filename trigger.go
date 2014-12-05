@@ -107,7 +107,7 @@ func (api *API) TriggersGet(params Params) (result Triggers, err error) {
 	 * which used in original parts of that API implementation
 	 * has some error which caused empty slices, e.g. Trigger.Functions
 	 * So we do manual unmarshalling. */
-	var response ResponseJson
+	var response ResponseWithJson
 	b, err := api.callBytes("trigger.get", params)
 	if err == nil {
 		err = json.Unmarshal(b, &response)
@@ -120,14 +120,7 @@ func (api *API) TriggersGet(params Params) (result Triggers, err error) {
 	}
 
 	result = make(Triggers, 0)
-	var trigger Trigger
-	for _, triggerJson := range response.Result {
-		err = json.Unmarshal(triggerJson, &trigger)
-		if err != nil {
-			return
-		}
-		result = append(result, trigger)
-	}
+	err = json.Unmarshal(response.Result, &result)
 
 	// transform Zabbix 1.8 status values to a newer ones
 	if !api.isVersionBigger(2, 0, 0) {
