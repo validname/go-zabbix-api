@@ -38,17 +38,9 @@ const (
 	TriggerValueFlagsUnknown  TriggerValueFlags = 1
 )
 
-type TriggerResponse struct {
-	Jsonrpc string      `json:"jsonrpc"`
-	Error   *Error      `json:"error"`
-	//Result  interface{} `json:"result"`
-	Result  []json.RawMessage `json:"result"`
-	Id      int32            `json:"id"`
-}
-
 type Function struct {
-	FunctionId int64  `json:"functionid,string"`
-	ItemId     int64  `json:"itemid,string"`
+	FunctionId string `json:"functionid"`
+	ItemId     string `json:"itemid"`
 	Function   string `json:"function"`
 	Parameter  string `json:"parameter"`
 }
@@ -115,7 +107,7 @@ func (api *API) TriggersGet(params Params) (result Triggers, err error) {
 	 * which used in original parts of that API implementation
 	 * has some error which caused empty slices, e.g. Trigger.Functions
 	 * So we do manual unmarshalling. */
-	var response TriggerResponse
+	var response ResponseJson
 	b, err := api.callBytes("trigger.get", params)
 	if err == nil {
 		err = json.Unmarshal(b, &response)
@@ -157,7 +149,7 @@ func (api *API) TriggerGetById(id string) (result *Trigger, err error) {
 		"expandDescription": "true",
 		"expandData":        "true",
 		"selectFunctions":   "true",
-		"triggerids":         []string{ id },
+		"triggerids":        []string{id},
 	}
 
 	triggers, err := api.TriggersGet(params)
@@ -176,7 +168,7 @@ func (api *API) TriggerGetById(id string) (result *Trigger, err error) {
 // TriggersGetInheritedFromId gets triggers on hosts which was inherited from template trigger
 // Use nil for empty additional parameters or filter
 func (api *API) TriggersGetInheritedFromId(id string, params Params, Filter map[string]string) (result Triggers, err error) {
-	if params==nil {
+	if params == nil {
 		params = make(Params)
 	}
 	params["output"] = "extend"
@@ -185,7 +177,7 @@ func (api *API) TriggersGetInheritedFromId(id string, params Params, Filter map[
 	params["expandData"] = "true"
 	params["inherited"] = 1
 
-	filter := map[string]string { "templateid": id }
+	filter := map[string]string{"templateid": id}
 	for property, value := range Filter {
 		filter[property] = value
 	}
@@ -196,7 +188,7 @@ func (api *API) TriggersGetInheritedFromId(id string, params Params, Filter map[
 // TriggersGetByTemplateId gets triggers from template by it's Id
 // Use nil for empty additional parameters or filter
 func (api *API) TriggersGetByTemplateId(id string, params Params, Filter map[string]string) (result Triggers, err error) {
-	if params==nil {
+	if params == nil {
 		params = make(Params)
 	}
 	params["output"] = "extend"
@@ -204,7 +196,7 @@ func (api *API) TriggersGetByTemplateId(id string, params Params, Filter map[str
 	params["expandDescription"] = "true"
 	params["expandData"] = "true"
 	params["templated"] = 1
-	params["templateids"] = []string{ id }
+	params["templateids"] = []string{id}
 
 	if Filter != nil {
 		params["filter"] = Filter

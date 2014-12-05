@@ -32,6 +32,13 @@ type Response struct {
 	Id      int32       `json:"id"`
 }
 
+type ResponseJson struct {
+	Jsonrpc string            `json:"jsonrpc"`
+	Error   *Error            `json:"error"`
+	Result  []json.RawMessage `json:"result"`
+	Id      int32             `json:"id"`
+}
+
 type Error struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
