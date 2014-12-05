@@ -2,7 +2,7 @@ package zabbix
 
 import (
 	"fmt"
-	"github.com/AlekSi/reflector"
+	"encoding/json"
 )
 
 type (
@@ -47,11 +47,22 @@ const (
 	Delta DeltaType = 2
 )
 
+type HostId struct {
+	HostId string `json:"hostid"`
+}
+
+type AppInfo struct {
+	HostList      []HostId `json:"hosts"`
+	ApplicationId string  `json:"applicationid"`
+	Name          string  `json:"name"`
+	TemplateId    string  `json:"templateid"`
+}
+
 // Item object
 // see https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/definitions
 type Item struct {
 	ItemId      string    `json:"itemid,omitempty"`
-	Delay       int       `json:"delay"`
+	Delay       int       `json:"delay,string"`
 	HostId      string    `json:"hostid"`
 	InterfaceId string    `json:"interfaceid,omitempty"`
 	Key         string    `json:"key_"`
@@ -59,20 +70,31 @@ type Item struct {
 	LastClock   string    `json:"lastclock"`
 	Units       string    `json:"units"`
 	Name        string    `json:"name"`
-	Type        ItemType  `json:"type"`
-	ValueType   ValueType `json:"value_type"`
-	DataType    DataType  `json:"data_type"`
-	Delta       DeltaType `json:"delta"`
+	Type        ItemType  `json:"type,string"`
+	ValueType   ValueType `json:"value_type,string"`
+	DataType    DataType  `json:"data_type,string"`
+	Delta       DeltaType `json:"delta,string"`
 	Description string    `json:"description"`
 	Error       string    `json:"error"`
-	History     int       `json:"history,omitempty"`
-	Trends      int       `json:"trends,omitempty"`
+	History     int       `json:"history,omitempty,string"`
+	Trends      int       `json:"trends,omitempty,string"`
 
-	// Fields below used only when creating applications
-	ApplicationIds []string `json:"applications,omitempty"`
+	// Field below used for receiving from Zabbix server and
+	// used only when 'selectApplications' parameter is set
+	Applications []AppInfo `json:"applications,omitempty"`
+
+	// Field below used only when creating applications
+	// It used once when invoking ItemsCreate() for backward compatibility with AlekSi old code
+	ApplicationIds []string
 }
 
 type Items []Item
+
+// Used only for for marshalling JSON in the ItemsCreate() function
+type ItemToCreate struct {
+	Item
+	ApplicationIds []string  `json:"applications,omitempty"`
+}
 
 // Converts slice to map by key. Panics if there are duplicate keys.
 func (items Items) ByKey() (res map[string]Item) {
@@ -89,17 +111,65 @@ func (items Items) ByKey() (res map[string]Item) {
 
 // ItemsGet is a wrapper for 'item.get'
 // see https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/get
-func (api *API) ItemsGet(params Params) (res Items, err error) {
+func (api *API) ItemsGet(params Params) (result Items, err error) {
 	if _, ok := params["output"]; !ok {
 		params["output"] = "extend"
 	}
-	response, err := api.CallWithError("item.get", params)
+	if _, ok := params["selectApplications"]; !ok {
+		params["selectApplications"] = "true"
+	}
+
+	if !api.isVersionBigger(2, 0, 0) {
+		// Transform parameters for Zabbix 1.8
+		if _, ok := params["selectApplications"]; ok {
+			params["select_applications"] = 1
+			// it's a hidden option from PHP sources, one must use it to enable 'select_*' options
+			params["extendoutput"] = 1
+		}
+	}
+
+	/* Warning! Reflector by AlekSi (from github.com/AlekSi/reflector)
+	 * which used in original parts of that API implementation
+	 * has some error which caused empty slices, e.g. Item.Applications
+	 * So we do manual unmarshalling. */
+	var response ResponseJson
+	b, err := api.callBytes("item.get", params)
+	if err == nil {
+		err = json.Unmarshal(b, &response)
+	}
+	if err == nil && response.Error != nil {
+		err = response.Error
+	}
 	if err != nil {
 		return
 	}
 
-	reflector.MapsToStructs2(response.Result.([]interface{}), &res, reflector.Strconv, "json")
+	result = make(Items, 0)
+	var item Item
+	for _, itemJson := range response.Result {
+		err = json.Unmarshal(itemJson, &item)
+		if err != nil {
+			return
+		}
+		result = append(result, item)
+	}
+
 	return
+}
+
+// ItemGetById gets items by Id only if there is exactly 1 matching item.
+func (api *API) ItemGetById(id string) (result *Item, err error) {
+	items, err := api.ItemsGet(Params{ "itemids" : []string{ id }})
+	if err != nil {
+		return
+	}
+	if len(items) == 1 {
+		result = &items[0]
+	} else {
+		e := ExpectedOneResult(len(items))
+		err = &e
+	}
+	return 
 }
 
 // ItemsGetByApplicationId gets items by application Id.
@@ -110,7 +180,18 @@ func (api *API) ItemsGetByApplicationId(id string) (res Items, err error) {
 // ItemsCreate is a wrapper for 'item.create'
 // see https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/create
 func (api *API) ItemsCreate(items Items) (err error) {
-	response, err := api.CallWithError("item.create", items)
+	// fill Item
+	itemsToCreate := make([]ItemToCreate, len(items))
+	for idx, item := range items {
+		// just assign pointer, no need to copy full structure
+		itemsToCreate[idx].Item = item
+		// force empty Applications field to prevent it's marshalling
+		itemsToCreate[idx].Item.Applications = nil
+		copy(itemsToCreate[idx].ApplicationIds, itemsToCreate[idx].Item.ApplicationIds)
+		itemsToCreate[idx].Item.ApplicationIds = nil
+	}
+	
+	response, err := api.CallWithError("item.create", itemsToCreate)
 	if err != nil {
 		return
 	}
