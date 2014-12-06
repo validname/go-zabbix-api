@@ -58,7 +58,7 @@ type Trigger struct {
 	LastChange  int64             `json:"lastchange,string"`
 	Priority    TriggerPriority   `json:"priority,string"`
 	Status      TriggerStatus     `json:"status,string"`
-	TemplateId  string            `json:"templateid"`
+	TemplateId  string            `json:"templateid,omitempty"`
 	Type        TriggerType       `json:"type,string"`
 	Url         string            `json:"url"`
 	Value       TriggerValue      `json:"value,string"`
