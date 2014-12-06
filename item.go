@@ -91,7 +91,7 @@ type Item struct {
 type Items []Item
 
 // Used only for for marshalling JSON in the ItemsCreate() function
-type ItemToCreate struct {
+type ItemWrite struct {
 	Item
 	ApplicationIds []string `json:"applications,omitempty"`
 }
@@ -172,18 +172,19 @@ func (api *API) ItemsGetByApplicationId(id string) (res Items, err error) {
 // ItemsCreate is a wrapper for 'item.create'
 // see https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/create
 func (api *API) ItemsCreate(items Items) (err error) {
-	// fill Item
-	itemsToCreate := make([]ItemToCreate, len(items))
+	// fill ItemWrite structure
+	itemsToWrite := make([]ItemWrite, len(items))
 	for idx, item := range items {
 		// just assign pointer, no need to copy full structure
-		itemsToCreate[idx].Item = item
+		itemsToWrite[idx].Item = item
+		itemsToWrite[idx].ApplicationIds = make([]string,len(itemsToWrite[idx].Item.ApplicationIds))
 		// force empty Applications field to prevent it's marshalling
-		itemsToCreate[idx].Item.Applications = nil
-		copy(itemsToCreate[idx].ApplicationIds, itemsToCreate[idx].Item.ApplicationIds)
-		itemsToCreate[idx].Item.ApplicationIds = nil
+		itemsToWrite[idx].Item.Applications = nil
+		copy(itemsToWrite[idx].ApplicationIds, itemsToWrite[idx].Item.ApplicationIds)
+		itemsToWrite[idx].Item.ApplicationIds = nil
 	}
 
-	response, err := api.CallWithError("item.create", itemsToCreate)
+	response, err := api.CallWithError("item.create", itemsToWrite)
 	if err != nil {
 		return
 	}
@@ -199,7 +200,18 @@ func (api *API) ItemsCreate(items Items) (err error) {
 // ItemsUpdate is a wrapper for 'item.update'
 // see https://www.zabbix.com/documentation/2.0/manual/appendix/api/item/update
 func (api *API) ItemsUpdate(items Items) (err error) {
-	response, err := api.CallWithError("item.update", items)
+	// fill ItemWrite structure
+	itemsToWrite := make([]ItemWrite, len(items))
+	for idx, item := range items {
+		// just assign pointer, no need to copy full structure
+		itemsToWrite[idx].Item = item
+		itemsToWrite[idx].ApplicationIds = make([]string,len(itemsToWrite[idx].Item.ApplicationIds))
+		// force empty Applications field to prevent it's marshalling
+		itemsToWrite[idx].Item.Applications = nil
+		copy(itemsToWrite[idx].ApplicationIds, itemsToWrite[idx].Item.ApplicationIds)
+		itemsToWrite[idx].Item.ApplicationIds = nil
+	}
+	response, err := api.CallWithError("item.update", itemsToWrite)
 	if err != nil {
 		return
 	}
