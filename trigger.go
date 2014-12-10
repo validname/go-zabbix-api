@@ -74,20 +74,17 @@ type Triggers []Trigger
 // TriggersGet is a wrapper for 'trigger.get'
 // see https://www.zabbix.com/documentation/2.0/manual/appendix/api/trigger/get
 func (api *API) TriggersGet(params Params) (result Triggers, err error) {
-	if _, ok := params["output"]; !ok {
-		params["output"] = "extend"
+	defaults := Params{
+		"output":            "extend",
+		"expandExpression":  "true",
+		"expandDescription": "true",
+		"expandData":        "true",
+		"selectFunctions":   "true",
 	}
-	if _, ok := params["expandExpression"]; !ok {
-		params["expandExpression"] = "true"
-	}
-	if _, ok := params["expandDescription"]; !ok {
-		params["expandDescription"] = "true"
-	}
-	if _, ok := params["expandData"]; !ok {
-		params["expandData"] = "true"
-	}
-	if _, ok := params["selectFunctions"]; !ok {
-		params["selectFunctions"] = "true"
+	for key, defaultValue := range defaults {
+		if _, ok := params[key]; !ok {
+			params[key] = defaultValue
+		}
 	}
 
 	if !api.isVersionBigger(2, 0, 0) {
@@ -95,21 +92,21 @@ func (api *API) TriggersGet(params Params) (result Triggers, err error) {
 		if _, ok := params["expandExpression"]; ok {
 			delete(params, "expandExpression")
 		}
-		if _, ok := params["expandDescription"]; ok {
-			if params["expandDescription"]=="true" {
+		if value, ok := params["expandDescription"]; ok {
+			if value == "true" {
 				params["expandDescription"] = "extend"
 			}
 		}
-		if _, ok := params["expandData"]; ok {
-			if params["expandData"]=="true" {
+		if value, ok := params["expandData"]; ok {
+			if value == "true" {
 				params["expandData"] = "extend"
 			}
 		}
-		if _, ok := params["selectFunctions"]; ok {
-			if params["selectFunctions"]=="true" {
+		if value, ok := params["selectFunctions"]; ok {
+			if value == "true" {
 				params["select_functions"] = "extend"
 			} else {
-				params["select_functions"] = params["selectFunctions"]
+				params["select_functions"] = value
 			}
 			delete(params, "selectFunctions")
 		}
@@ -172,7 +169,7 @@ func (api *API) TriggerGetById(id string) (result *Trigger, err error) {
 
 // TriggersGetInheritedFromId gets triggers on hosts which was inherited from template trigger
 // Use nil for empty additional parameters or filter
-func (api *API) TriggersGetInheritedFromId(id string, params Params, Filter map[string]string) (result Triggers, err error) {
+func (api *API) TriggersGetInheritedFromId(id string, params Params, filter map[string]string) (result Triggers, err error) {
 	if params == nil {
 		params = make(Params)
 	}
@@ -182,9 +179,10 @@ func (api *API) TriggersGetInheritedFromId(id string, params Params, Filter map[
 	params["expandData"] = "true"
 	params["inherited"] = 1
 
-	filter := map[string]string{"templateid": id}
-	for property, value := range Filter {
-		filter[property] = value
+	if filter != nil {
+		filter["templateid"] = id
+	} else {
+		filter = map[string]string{"templateid": id}
 	}
 	params["filter"] = filter
 	return api.TriggersGet(params)
@@ -192,7 +190,7 @@ func (api *API) TriggersGetInheritedFromId(id string, params Params, Filter map[
 
 // TriggersGetByTemplateId gets triggers from template by it's Id
 // Use nil for empty additional parameters or filter
-func (api *API) TriggersGetByTemplateId(id string, params Params, Filter map[string]string) (result Triggers, err error) {
+func (api *API) TriggersGetByTemplateId(id string, params Params, filter map[string]string) (result Triggers, err error) {
 	if params == nil {
 		params = make(Params)
 	}
@@ -203,8 +201,8 @@ func (api *API) TriggersGetByTemplateId(id string, params Params, Filter map[str
 	params["templated"] = 1
 	params["templateids"] = []string{id}
 
-	if Filter != nil {
-		params["filter"] = Filter
+	if filter != nil {
+		params["filter"] = filter
 	}
 	return api.TriggersGet(params)
 }
