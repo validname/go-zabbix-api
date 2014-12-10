@@ -92,14 +92,26 @@ func (api *API) TriggersGet(params Params) (result Triggers, err error) {
 
 	if !api.isVersionBigger(2, 0, 0) {
 		// Transform parameters for Zabbix 1.8
+		if _, ok := params["expandExpression"]; ok {
+			delete(params, "expandExpression")
+		}
 		if _, ok := params["expandDescription"]; ok {
-			params["expandDescription"] = "extend"
+			if params["expandDescription"]=="true" {
+				params["expandDescription"] = "extend"
+			}
 		}
 		if _, ok := params["expandData"]; ok {
-			params["expandData"] = "extend"
+			if params["expandData"]=="true" {
+				params["expandData"] = "extend"
+			}
 		}
 		if _, ok := params["selectFunctions"]; ok {
-			params["select_functions"] = "extend"
+			if params["selectFunctions"]=="true" {
+				params["select_functions"] = "extend"
+			} else {
+				params["select_functions"] = params["selectFunctions"]
+			}
+			delete(params, "selectFunctions")
 		}
 	}
 
