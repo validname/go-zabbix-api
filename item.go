@@ -47,12 +47,8 @@ const (
 	Delta DeltaType = 2
 )
 
-type HostId struct {
-	HostId string `json:"hostid"`
-}
-
 type AppInfo struct {
-	HostList      []HostId `json:"hosts"`
+	HostList      HostIds `json:"hosts"`
 	ApplicationId string   `json:"applicationid"`
 	Name          string   `json:"name"`
 	TemplateId    string   `json:"templateid"`

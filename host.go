@@ -35,6 +35,12 @@ type Host struct {
 
 type Hosts []Host
 
+type HostId struct {
+	HostId string `json:"hostid"`
+}
+
+type HostIds []HostId
+
 // HostsGet is a wrapper for 'host.get'
 // see https://www.zabbix.com/documentation/2.0/manual/appendix/api/host/get
 func (api *API) HostsGet(params Params) (res Hosts, err error) {
@@ -62,6 +68,11 @@ func (api *API) HostsGetByHostGroups(hostGroups HostGroups) (res Hosts, err erro
 		ids[i] = id.GroupId
 	}
 	return api.HostsGetByHostGroupIds(ids)
+}
+
+// HostsGetByTemplateIds gets hosts by linked template Ids.
+func (api *API) HostsGetByTemplateIds(ids []string) (res Hosts, err error) {
+	return api.HostsGet(Params{"templateids": ids})
 }
 
 // HostGetById gets host by Id only if there is exactly 1 matching host.
@@ -136,7 +147,7 @@ func (api *API) HostsDelete(hosts Hosts) (err error) {
 }
 
 // HostsDeleteByIds is a wrapper for 'host.delete'
-// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/host/delete
+// see https://www.zabbix.com/documentation/1.8/manual/appendix/api/host/delete
 // Deletes by hosts Id list
 // Only for Zabbix version up to 1.8
 func (api *API) HostsDeleteByIds(ids []string) (err error) {
