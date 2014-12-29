@@ -60,6 +60,24 @@ func (api *API) HostGroupGetById(id string) (res *HostGroup, err error) {
 	return
 }
 
+// HostGroupGetByName gets host group by name only if there is exactly 1 matching host group.
+func (api *API) HostGroupGetByName(name string) (res *HostGroup, err error) {
+	groups, err := api.HostGroupsGet(
+		Params{
+			"filter": map[string]string{ "name": name } })
+	if err != nil {
+		return
+	}
+
+	if len(groups) == 1 {
+		res = &groups[0]
+	} else {
+		e := ExpectedOneResult(len(groups))
+		err = &e
+	}
+	return
+}
+
 // HostGroupsCreate is a wrapper for 'hostgroup.create'
 // see https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostgroup/create
 func (api *API) HostGroupsCreate(hostGroups HostGroups) (err error) {
