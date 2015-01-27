@@ -109,6 +109,9 @@ func (api *API) printf(format string, v ...interface{}) {
 // discoverVersion gets and stores Zabbix API version from the server
 func (api *API) discoverVersion() (err error) {
 	strVersion, err := api.Version()
+	if err != nil {
+		return err
+	}
 	versioninfo := strings.Split(strVersion, ".")
 
 	if len(versioninfo) != 3 {
@@ -199,6 +202,10 @@ func (api *API) CallWithError(method string, params interface{}) (response Respo
 
 // Login calls "user.login" API method and fills api.Auth field.
 func (api *API) Login(user, password string) (auth string, err error) {
+	// API version is available for unauthenticated users since Zabbix version 2.0,
+	// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/apiinfo/version
+	errGettingVersion := api.discoverVersion()
+
 	params := map[string]string{"user": user, "password": password}
 	response, err := api.CallWithError("user.login", params)
 	if err != nil {
@@ -207,7 +214,10 @@ func (api *API) Login(user, password string) (auth string, err error) {
 
 	auth = response.Result.(string)
 	api.Auth = auth
-	api.discoverVersion()
+	// re-try to get version with auth if previous unauthenticated attempt was unsuccessfull
+	if errGettingVersion != nil {
+		api.discoverVersion()
+	}
 	return
 }
 
