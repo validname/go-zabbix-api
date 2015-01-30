@@ -89,7 +89,7 @@ type Items []Item
 // Used only for for marshalling JSON in the ItemsCreate() function
 type ItemWrite struct {
 	Item
-	ApplicationIds []string `json:"applications,omitempty"`
+	ApplicationIds []string `json:"applications"`
 }
 
 // Converts slice to map by key. Panics if there are duplicate keys.
@@ -112,15 +112,16 @@ func (api *API) ItemsGet(params Params) (result Items, err error) {
 		params["output"] = "extend"
 	}
 	if _, ok := params["selectApplications"]; !ok {
-		params["selectApplications"] = "true"
+		params["selectApplications"] = "extend"
 	}
 
 	if !api.isVersionBigger(2, 0, 0) {
 		// Transform parameters for Zabbix 1.8
 		if _, ok := params["selectApplications"]; ok {
-			params["select_applications"] = 1
+			params["select_applications"] = "extend"
 			// it's a hidden option from PHP sources, one must use it to enable 'select_*' options
 			params["extendoutput"] = 1
+			delete(params, "selectApplications")
 		}
 	}
 
@@ -142,6 +143,17 @@ func (api *API) ItemsGet(params Params) (result Items, err error) {
 
 	result = make(Items, 0)
 	err = json.Unmarshal(response.Result, &result)
+
+	if err == nil {
+		if !api.isVersionBigger(2, 0, 0) {
+			// Transform results from Zabbix 1.8
+			for idx, _ := range result {
+				result[idx].Name = result[idx].Description
+				result[idx].Description = ""
+			}
+		}
+	}
+
 	return
 }
 
@@ -178,6 +190,12 @@ func (api *API) ItemsCreate(items Items) (err error) {
 		itemsToWrite[idx].Item.Applications = nil
 		copy(itemsToWrite[idx].ApplicationIds, itemsToWrite[idx].Item.ApplicationIds)
 		itemsToWrite[idx].Item.ApplicationIds = nil
+
+		if !api.isVersionBigger(2, 0, 0) {
+			// Transform parameters for Zabbix 1.8
+			itemsToWrite[idx].Item.Description = itemsToWrite[idx].Item.Name
+			itemsToWrite[idx].Item.Name = ""
+		}
 	}
 
 	response, err := api.CallWithError("item.create", itemsToWrite)
@@ -206,6 +224,13 @@ func (api *API) ItemsUpdate(items Items) (err error) {
 		itemsToWrite[idx].Item.Applications = nil
 		copy(itemsToWrite[idx].ApplicationIds, itemsToWrite[idx].Item.ApplicationIds)
 		itemsToWrite[idx].Item.ApplicationIds = nil
+
+		if !api.isVersionBigger(2, 0, 0) {
+			// Transform parameters for Zabbix 1.8
+			itemsToWrite[idx].Item.Description = itemsToWrite[idx].Item.Name
+			itemsToWrite[idx].Item.Name = ""
+		}
+
 	}
 	response, err := api.CallWithError("item.update", itemsToWrite)
 	if err != nil {
