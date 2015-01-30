@@ -79,7 +79,7 @@ func (api *API) TriggersGet(params Params) (result Triggers, err error) {
 		"expandExpression":  "true",
 		"expandDescription": "true",
 		"expandData":        "true",
-		"selectFunctions":   "true",
+		"selectFunctions":   "extend",
 	}
 	for key, defaultValue := range defaults {
 		if _, ok := params[key]; !ok {
@@ -103,11 +103,7 @@ func (api *API) TriggersGet(params Params) (result Triggers, err error) {
 			}
 		}
 		if value, ok := params["selectFunctions"]; ok {
-			if value == "true" {
-				params["select_functions"] = "extend"
-			} else {
-				params["select_functions"] = value
-			}
+			params["select_functions"] = value
 			delete(params, "selectFunctions")
 		}
 	}
@@ -150,7 +146,7 @@ func (api *API) TriggerGetById(id string) (result *Trigger, err error) {
 		"expandExpression":  "true",
 		"expandDescription": "true",
 		"expandData":        "true",
-		"selectFunctions":   "true",
+		"selectFunctions":   "extend",
 		"triggerids":        []string{id},
 	}
 
