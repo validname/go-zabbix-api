@@ -61,7 +61,7 @@ type Trigger struct {
 	TemplateId  string            `json:"templateid,omitempty"`
 	Type        TriggerType       `json:"type,string"`
 	Url         string            `json:"url"`
-	Value       TriggerValue      `json:"value,string"`
+	Value       TriggerValue      `json:"value,string,omitempty"`
 	ValueFlags  TriggerValueFlags `json:"value_flags,string"`
 	// only when expandData flag is set
 	//HostId string `json:"hostid,string"`
