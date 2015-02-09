@@ -133,7 +133,7 @@ func (api *API) HostsDelete(hosts Hosts) (err error) {
 		ids[i] = host.HostId
 	}
 
-	if api.isVersionBigger(2, 4, 0) {
+	if api.IsVersionBigger(2, 4, 0) {
 		err = api.HostsDeleteByIdsNew(ids)
 	} else {
 		err = api.HostsDeleteByIds(ids)

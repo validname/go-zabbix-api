@@ -35,7 +35,7 @@ type HostInterfaces []HostInterface
 // see https://www.zabbix.com/documentation/2.4/manual/api/reference/hostinterface/get
 
 func (api *API) HostInterfacesGet(params Params) (result HostInterfaces, err error) {
-	if !api.isVersionBigger(2, 0, 0) {
+	if !api.IsVersionBigger(2, 0, 0) {
 		// there was no such object in Zabbix 1.8
 		err = errors.New("Too old Zabbix version to use this function.")
 		return

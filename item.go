@@ -115,7 +115,7 @@ func (api *API) ItemsGet(params Params) (result Items, err error) {
 		params["selectApplications"] = "extend"
 	}
 
-	if !api.isVersionBigger(2, 0, 0) {
+	if !api.IsVersionBigger(2, 0, 0) {
 		// Transform parameters for Zabbix 1.8
 		if _, ok := params["selectApplications"]; ok {
 			params["select_applications"] = "extend"
@@ -145,7 +145,7 @@ func (api *API) ItemsGet(params Params) (result Items, err error) {
 	err = json.Unmarshal(response.Result, &result)
 
 	if err == nil {
-		if !api.isVersionBigger(2, 0, 0) {
+		if !api.IsVersionBigger(2, 0, 0) {
 			// Transform results from Zabbix 1.8
 			for idx, _ := range result {
 				result[idx].Name = result[idx].Description
@@ -191,7 +191,7 @@ func (api *API) ItemsCreate(items Items) (err error) {
 		copy(itemsToWrite[idx].ApplicationIds, itemsToWrite[idx].Item.ApplicationIds)
 		itemsToWrite[idx].Item.ApplicationIds = nil
 
-		if !api.isVersionBigger(2, 0, 0) {
+		if !api.IsVersionBigger(2, 0, 0) {
 			// Transform parameters for Zabbix 1.8
 			itemsToWrite[idx].Item.Description = itemsToWrite[idx].Item.Name
 			itemsToWrite[idx].Item.Name = ""
@@ -225,7 +225,7 @@ func (api *API) ItemsUpdate(items Items) (err error) {
 		copy(itemsToWrite[idx].ApplicationIds, itemsToWrite[idx].Item.ApplicationIds)
 		itemsToWrite[idx].Item.ApplicationIds = nil
 
-		if !api.isVersionBigger(2, 0, 0) {
+		if !api.IsVersionBigger(2, 0, 0) {
 			// Transform parameters for Zabbix 1.8
 			itemsToWrite[idx].Item.Description = itemsToWrite[idx].Item.Name
 			itemsToWrite[idx].Item.Name = ""

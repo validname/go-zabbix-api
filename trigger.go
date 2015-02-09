@@ -87,7 +87,7 @@ func (api *API) TriggersGet(params Params) (result Triggers, err error) {
 		}
 	}
 
-	if !api.isVersionBigger(2, 0, 0) {
+	if !api.IsVersionBigger(2, 0, 0) {
 		// Transform parameters for Zabbix 1.8
 		if _, ok := params["expandExpression"]; ok {
 			delete(params, "expandExpression")
@@ -128,7 +128,7 @@ func (api *API) TriggersGet(params Params) (result Triggers, err error) {
 	err = json.Unmarshal(response.Result, &result)
 
 	// transform Zabbix 1.8 status values to a newer ones
-	if !api.isVersionBigger(2, 0, 0) {
+	if !api.IsVersionBigger(2, 0, 0) {
 		for _, trigger := range result {
 			if trigger.Value == TriggerValueUnknown {
 				trigger.ValueFlags = TriggerValueFlagsUnknown

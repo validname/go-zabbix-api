@@ -232,8 +232,8 @@ func (api *API) Version() (v string, err error) {
 	return
 }
 
-// isVersionBigger returns true if version of Zabbix API is bigger than version compared with
-func (api *API) isVersionBigger(major int, minor int, release int) bool {
+// IsVersionBigger returns true if version of Zabbix API is bigger than version compared with
+func (api *API) IsVersionBigger(major int, minor int, release int) bool {
 	if api.version.Major != major {
 		return api.version.Major > major
 	}
