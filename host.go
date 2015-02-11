@@ -31,6 +31,12 @@ type Host struct {
 	// Fields below used only when creating hosts
 	GroupIds   HostGroupIds   `json:"groups,omitempty"`
 	Interfaces HostInterfaces `json:"interfaces,omitempty"`
+
+	// Only for backward compatibility with Zabbix 1.8
+	DNS         string        `json:"dns,omitempty"`
+	IP          string        `json:"ip,omitempty"`
+	UseIP       int           `json:"useip,string,omitempty"`
+	Port        string        `json:"port,omitempty"`
 }
 
 type Hosts []Host
