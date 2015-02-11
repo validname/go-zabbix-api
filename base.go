@@ -221,6 +221,12 @@ func (api *API) Login(user, password string) (auth string, err error) {
 	return
 }
 
+// Logout calls "user.logout" API method.
+func (api *API) Logout() (err error) {
+	_, err = api.CallWithError("user.logout", map[string]string{})
+	return
+}
+
 // Version gets Zabbix API version from the server
 func (api *API) Version() (v string, err error) {
 	response, err := api.CallWithError("APIInfo.version", Params{})
