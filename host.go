@@ -1,7 +1,7 @@
 package zabbix
 
 import (
-	"github.com/AlekSi/reflector"
+	"encoding/json"
 )
 
 type (
@@ -22,14 +22,15 @@ const (
 type Host struct {
 	HostId    string        `json:"hostid,omitempty"`
 	Host      string        `json:"host"`
-	Available AvailableType `json:"available"`
+	Available AvailableType `json:"available,string"`
 	Error     string        `json:"error"`
 	Name      string        `json:"name"`
-	Status    StatusType    `json:"status"`
+	Status    StatusType    `json:"status,string"`
 	ProxyId   string        `json:"proxy_hostid,omitempty"`
 
 	// Fields below used only when creating hosts
-	GroupIds   HostGroupIds   `json:"groups,omitempty"`
+	//GroupIds   HostGroupIds   `json:"groups,omitempty"`
+	GroupIds   HostGroupIds   `json:"groups"`
 	Interfaces HostInterfaces `json:"interfaces,omitempty"`
 
 	// Only for backward compatibility with Zabbix 1.8
@@ -49,16 +50,44 @@ type HostIds []HostId
 
 // HostsGet is a wrapper for 'host.get'
 // see https://www.zabbix.com/documentation/2.0/manual/appendix/api/host/get
-func (api *API) HostsGet(params Params) (res Hosts, err error) {
-	if _, ok := params["output"]; !ok {
-		params["output"] = "extend"
+func (api *API) HostsGet(params Params) (result Hosts, err error) {
+	defaults := Params{
+		"output":           "extend",
+		"selectGroups":     "extend",
+		"selectInterfaces": "extend",
 	}
-	response, err := api.CallWithError("host.get", params)
+
+	for key, defaultValue := range defaults {
+		if _, ok := params[key]; !ok {
+			params[key] = defaultValue
+		}
+	}
+
+	if !api.IsVersionBigger(2, 0, 0) {
+		// Transform parameters for Zabbix 1.8
+		if _, ok := params["selectInterfaces"]; ok {
+			delete(params, "selectInterfaces")
+		}
+		if value, ok := params["selectGroups"]; ok {
+			params["select_groups"] = value
+			delete(params, "selectGroups")
+		}
+	}
+
+	var response ResponseWithJson
+	b, err := api.callBytes("host.get", params)
+	if err == nil {
+		err = json.Unmarshal(b, &response)
+	}
+	if err == nil && response.Error != nil {
+		err = response.Error
+	}
 	if err != nil {
 		return
 	}
 
-	reflector.MapsToStructs2(response.Result.([]interface{}), &res, reflector.Strconv, "json")
+	result = make(Hosts, 0)
+	err = json.Unmarshal(response.Result, &result)
 	return
 }
 
