@@ -78,6 +78,11 @@ func (api *API) HostGroupGetByName(name string) (res *HostGroup, err error) {
 	return
 }
 
+// HostGroupGetHostId gets host groups which host id belongs to
+func (api *API) HostGroupGetHostId(id string) (res HostGroups, err error) {
+	return api.HostGroupsGet(Params{ "hostids": id })
+}
+
 // HostGroupsCreate is a wrapper for 'hostgroup.create'
 // see https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostgroup/create
 func (api *API) HostGroupsCreate(hostGroups HostGroups) (err error) {
