@@ -13,7 +13,8 @@ const (
 	Internal    InternalType = 1
 )
 
-// https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostgroup/definitions
+// HostGroup object
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostgroup/definitions
 type HostGroup struct {
 	GroupId  string       `json:"groupid,omitempty"`
 	Name     string       `json:"name"`
@@ -28,9 +29,10 @@ type HostGroupId struct {
 
 type HostGroupIds []HostGroupId
 
-// Wrapper for hostgroup.get: https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostgroup/get
+// HostGroupsGet is a wrapper for 'hostgroup.get'
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostgroup/get
 func (api *API) HostGroupsGet(params Params) (res HostGroups, err error) {
-	if _, present := params["output"]; !present {
+	if _, ok := params["output"]; !ok {
 		params["output"] = "extend"
 	}
 	response, err := api.CallWithError("hostgroup.get", params)
@@ -42,7 +44,7 @@ func (api *API) HostGroupsGet(params Params) (res HostGroups, err error) {
 	return
 }
 
-// Gets host group by Id only if there is exactly 1 matching host group.
+// HostGroupGetById gets host group by Id only if there is exactly 1 matching host group.
 func (api *API) HostGroupGetById(id string) (res *HostGroup, err error) {
 	groups, err := api.HostGroupsGet(Params{"groupids": id})
 	if err != nil {
@@ -58,7 +60,31 @@ func (api *API) HostGroupGetById(id string) (res *HostGroup, err error) {
 	return
 }
 
-// Wrapper for hostgroup.create: https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostgroup/create
+// HostGroupGetByName gets host group by name only if there is exactly 1 matching host group.
+func (api *API) HostGroupGetByName(name string) (res *HostGroup, err error) {
+	groups, err := api.HostGroupsGet(
+		Params{
+			"filter": map[string]string{ "name": name } })
+	if err != nil {
+		return
+	}
+
+	if len(groups) == 1 {
+		res = &groups[0]
+	} else {
+		e := ExpectedOneResult(len(groups))
+		err = &e
+	}
+	return
+}
+
+// HostGroupGetHostId gets host groups which host id belongs to
+func (api *API) HostGroupGetHostId(id string) (res HostGroups, err error) {
+	return api.HostGroupsGet(Params{ "hostids": id })
+}
+
+// HostGroupsCreate is a wrapper for 'hostgroup.create'
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostgroup/create
 func (api *API) HostGroupsCreate(hostGroups HostGroups) (err error) {
 	response, err := api.CallWithError("hostgroup.create", hostGroups)
 	if err != nil {
@@ -73,7 +99,9 @@ func (api *API) HostGroupsCreate(hostGroups HostGroups) (err error) {
 	return
 }
 
-// Wrapper for hostgroup.delete: https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostgroup/delete
+// HostGroupsDelete is a wrapper for 'hostgroup.delete'
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostgroup/delete
+// Deletes by HostGroups list
 // Cleans GroupId in all hostGroups elements if call succeed.
 func (api *API) HostGroupsDelete(hostGroups HostGroups) (err error) {
 	ids := make([]string, len(hostGroups))
@@ -90,7 +118,9 @@ func (api *API) HostGroupsDelete(hostGroups HostGroups) (err error) {
 	return
 }
 
-// Wrapper for hostgroup.delete: https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostgroup/delete
+// HostGroupsDeleteByIds is a wrapper for 'hostgroup.delete'
+// see https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostgroup/delete
+// Deletes by Ids list
 func (api *API) HostGroupsDeleteByIds(ids []string) (err error) {
 	response, err := api.CallWithError("hostgroup.delete", ids)
 	if err != nil {
